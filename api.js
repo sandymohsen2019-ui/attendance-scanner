@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/library/d/1l9pEUSeb561NiHpDjFk8ocyiPZ5Q8p9vuPfWKoOihdXwkJ7wiiPuwn1Z/7";
+const API_URL = "https://script.google.com/macros/s/AKfycbwYxiDhIhw-t5bYSSrEP0nmDRHoTDKNbFVk_hlEqkwQUTYhdnl1Th_qhh3NkeQLtfrN/exec";
 
 async function recordAttendance(qr, scanner) {
 
