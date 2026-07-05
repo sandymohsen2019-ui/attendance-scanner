@@ -1,13 +1,17 @@
-let scanner = null;
+let html5QrCode = null;
 let scanLocked = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("startBtn").addEventListener("click", startScanner);
+
+    const startBtn = document.getElementById("startBtn");
+    startBtn.addEventListener("click", startScanner);
 
     const savedScanner = localStorage.getItem("scanner");
+
     if (savedScanner) {
         document.getElementById("scannerSelect").value = savedScanner;
     }
+
 });
 
 async function startScanner() {
@@ -25,6 +29,15 @@ async function startScanner() {
 
     try {
 
+        if (html5QrCode) {
+            try {
+                await html5QrCode.stop();
+            } catch (e) {}
+            try {
+                await html5QrCode.clear();
+            } catch (e) {}
+        }
+
         const cameras = await Html5Qrcode.getCameras();
 
         if (!cameras || cameras.length === 0) {
@@ -32,28 +45,22 @@ async function startScanner() {
             return;
         }
 
-        if (scanner) {
-            try {
-                await scanner.stop();
-                await scanner.clear();
-            } catch (e) {}
-        }
+        // Usually the last camera is the rear camera
+        const cameraId = cameras[cameras.length - 1].id;
 
-        scanner = new Html5Qrcode("reader");
+        html5QrCode = new Html5Qrcode("reader");
 
-        // Use the last camera (usually the rear camera)
-        const selectedCamera = cameras[cameras.length - 1];
-
-        await scanner.start(
-            selectedCamera.id,
+        await html5QrCode.start(
+            cameraId,
             {
                 fps: 10,
-                qrbox: 250
+                qrbox: {
+                    width: 250,
+                    height: 250
+                }
             },
             onScanSuccess,
-            function (error) {
-                // Ignore scan errors
-            }
+            onScanFailure
         );
 
         document.getElementById("message").innerHTML = "Ready to scan";
@@ -67,6 +74,10 @@ async function startScanner() {
 
 }
 
+function onScanFailure(error) {
+    // Ignore continuous scan errors
+}
+
 async function onScanSuccess(decodedText) {
 
     if (scanLocked) return;
@@ -75,7 +86,7 @@ async function onScanSuccess(decodedText) {
 
     const scannerName = document.getElementById("scannerSelect").value;
 
-    document.getElementById("message").innerHTML = "Checking attendance...";
+    document.getElementById("message").innerHTML = "Recording attendance...";
 
     try {
 
@@ -94,6 +105,8 @@ async function onScanSuccess(decodedText) {
         }
 
     } catch (err) {
+
+        console.error(err);
 
         document.getElementById("message").innerHTML =
             "❌ " + err.message;
