@@ -1,1 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Attendance Scanner</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+    <script src="script.js" defer></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>📷 Attendance Scanner</h1>
+
+        <label>Select Scanner</label>
+
+        <select id="scannerSelect">
+            <option value="">Choose Scanner</option>
+            <option>Sandy</option>
+            <option>George</option>
+            <option>Mina</option>
+        </select>
+
+        <button id="startBtn">
+            Start Scanner
+        </button>
+
+        <div id="reader"></div>
+
+        <div id="message">
+            Ready
+        </div>
+
+    </div>
+
+</body>
+
+</html>
