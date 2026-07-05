@@ -76,17 +76,41 @@ async function startScanner() {
 
 let lastScan = "";
 
-function onScanSuccess(decodedText) {
+let lastScan = "";
+let scanLocked = false;
 
-    if (decodedText === lastScan) return;
+async function onScanSuccess(decodedText) {
 
-    lastScan = decodedText;
+    if (scanLocked) return;
+
+    scanLocked = true;
+
+    const scannerName = document.getElementById("scannerSelect").value;
 
     document.getElementById("message").innerHTML =
-        "✅ " + decodedText;
+        "Checking attendance...";
+
+    const result = await recordAttendance(decodedText, scannerName);
+
+    if (result.success) {
+
+        document.getElementById("message").innerHTML =
+            "✅ " + result.name;
+
+    } else {
+
+        document.getElementById("message").innerHTML =
+            "❌ " + result.message;
+
+    }
 
     setTimeout(() => {
-        lastScan = "";
+
+        scanLocked = false;
+
+        document.getElementById("message").innerHTML =
+            "Ready for next attendee";
+
     }, 1500);
 
 }
