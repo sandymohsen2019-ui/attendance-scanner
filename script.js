@@ -40,18 +40,30 @@ function startScanner(){
 
         }
 
-        scanner.start(
+        // Try to find the back camera
+let backCamera = cameras.find(camera =>
+    camera.label.toLowerCase().includes("back") ||
+    camera.label.toLowerCase().includes("rear") ||
+    camera.label.toLowerCase().includes("environment")
+);
 
-            cameras[0].id,
+// If no back camera is found, use the last camera
+if (!backCamera) {
+    backCamera = cameras[cameras.length - 1];
+}
 
-            {
-                fps:10,
-                qrbox:250
-            },
+scanner.start(
 
-            onScanSuccess
+    backCamera.id,
 
-        );
+    {
+        fps: 10,
+        qrbox: 250
+    },
+
+    onScanSuccess
+
+);
 
     })
 
