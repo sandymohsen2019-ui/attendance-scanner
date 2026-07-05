@@ -1,83 +1,92 @@
-document
-.getElementById("startBtn")
-.addEventListener("click",startScanner);
+let scanner = null;
 
-let scanner;
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("startBtn").addEventListener("click", startScanner);
 
-function startScanner(){
+    const savedScanner = localStorage.getItem("scanner");
+    if (savedScanner) {
+        document.getElementById("scannerSelect").value = savedScanner;
+    }
+});
 
-    const scannerName=document
-    .getElementById("scannerSelect")
-    .value;
+async function startScanner() {
 
-    if(scannerName==""){
+    const scannerName = document.getElementById("scannerSelect").value;
 
+    if (!scannerName) {
         alert("Please select a scanner.");
-
         return;
-
     }
 
-    localStorage.setItem(
-        "scanner",
-        scannerName
-    );
+    localStorage.setItem("scanner", scannerName);
 
-    document.getElementById("message")
-    .innerHTML="Opening Camera...";
+    document.getElementById("message").innerHTML = "Loading cameras...";
 
-    scanner=new Html5Qrcode("reader");
+    try {
 
-    Html5Qrcode.getCameras()
+        const cameras = await Html5Qrcode.getCameras();
 
-    .then(cameras=>{
-
-        if(cameras.length==0){
-
-            alert("No Camera Found");
-
+        if (!cameras || cameras.length === 0) {
+            document.getElementById("message").innerHTML = "No camera found.";
             return;
-
         }
 
-        // Try to find the back camera
-let backCamera = cameras.find(camera =>
-    camera.label.toLowerCase().includes("back") ||
-    camera.label.toLowerCase().includes("rear") ||
-    camera.label.toLowerCase().includes("environment")
-);
+        console.log("Available cameras:");
+        cameras.forEach((camera, index) => {
+            console.log(index + ":", camera.label, camera.id);
+        });
 
-// If no back camera is found, use the last camera
-if (!backCamera) {
-    backCamera = cameras[cameras.length - 1];
-}
+        // Stop previous scanner if running
+        if (scanner) {
+            try {
+                await scanner.stop();
+                await scanner.clear();
+            } catch (e) {}
+        }
 
-scanner.start(
+        scanner = new Html5Qrcode("reader");
 
-    backCamera.id,
+        // On most phones, the last camera is the rear camera
+        const selectedCamera = cameras[cameras.length - 1];
 
-    {
-        fps: 10,
-        qrbox: 250
-    },
+        document.getElementById("message").innerHTML =
+            "Using: " + (selectedCamera.label || "Rear Camera");
 
-    onScanSuccess
+        await scanner.start(
+            selectedCamera.id,
+            {
+                fps: 10,
+                qrbox: {
+                    width: 250,
+                    height: 250
+                },
+                aspectRatio: 1.0
+            },
+            onScanSuccess,
+            () => {}
+        );
 
-);
-
-    })
-
-    .catch(err=>{
-
+    } catch (err) {
+        console.error(err);
+        document.getElementById("message").innerHTML = err;
         alert(err);
-
-    });
+    }
 
 }
 
-function onScanSuccess(decodedText){
+let lastScan = "";
 
-    document.getElementById("message")
-    .innerHTML=decodedText;
+function onScanSuccess(decodedText) {
+
+    if (decodedText === lastScan) return;
+
+    lastScan = decodedText;
+
+    document.getElementById("message").innerHTML =
+        "✅ " + decodedText;
+
+    setTimeout(() => {
+        lastScan = "";
+    }, 1500);
 
 }
