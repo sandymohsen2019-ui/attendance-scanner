@@ -30,95 +30,106 @@ async function startScanner() {
     try {
 
         if (html5QrCode) {
+
             try {
                 await html5QrCode.stop();
-            } catch (e) {}
+            } catch(e){}
+
             try {
                 await html5QrCode.clear();
-            } catch (e) {}
+            } catch(e){}
         }
 
         const cameras = await Html5Qrcode.getCameras();
 
-        if (!cameras || cameras.length === 0) {
+        if (cameras.length === 0) {
+
             document.getElementById("message").innerHTML = "No camera found";
             return;
+
         }
 
-        // Usually the last camera is the rear camera
-        const cameraId = cameras[cameras.length - 1].id;
+        const rearCamera = cameras[cameras.length - 1];
 
         html5QrCode = new Html5Qrcode("reader");
 
         await html5QrCode.start(
-            cameraId,
+
+            rearCamera.id,
+
             {
-                fps: 10,
-                qrbox: {
-                    width: 250,
-                    height: 250
+                fps:10,
+                qrbox:{
+                    width:250,
+                    height:250
                 }
             },
+
             onScanSuccess,
-            onScanFailure
+
+            function(){}
+
         );
 
         document.getElementById("message").innerHTML = "Ready to scan";
 
-    } catch (err) {
+    }
+
+    catch(err){
 
         console.error(err);
+
         document.getElementById("message").innerHTML = err.message;
 
     }
 
 }
 
-function onScanFailure(error) {
-    // Ignore continuous scan errors
-}
+async function onScanSuccess(decodedText){
 
-async function onScanSuccess(decodedText) {
+    if(scanLocked) return;
 
-    if (scanLocked) return;
+    scanLocked=true;
 
-    scanLocked = true;
+    document.getElementById("message").innerHTML=
+    "QR Detected: "+decodedText;
 
-    const scannerName = document.getElementById("scannerSelect").value;
+    const scannerName=document.getElementById("scannerSelect").value;
 
-    document.getElementById("message").innerHTML = "Recording attendance...";
+    try{
 
-    try {
+        const result=await recordAttendance(decodedText,scannerName);
 
-        const result = await recordAttendance(decodedText, scannerName);
+        if(result.success){
 
-        if (result.success) {
+            document.getElementById("message").innerHTML=
+            "✅ "+result.name;
 
-            document.getElementById("message").innerHTML =
-                "✅ " + result.name;
+        }else{
 
-        } else {
-
-            document.getElementById("message").innerHTML =
-                "❌ " + result.message;
+            document.getElementById("message").innerHTML=
+            "❌ "+result.message;
 
         }
 
-    } catch (err) {
+    }
+
+    catch(err){
 
         console.error(err);
 
-        document.getElementById("message").innerHTML =
-            "❌ " + err.message;
+        document.getElementById("message").innerHTML=
+        "❌ "+err;
 
     }
 
-    setTimeout(() => {
+    setTimeout(function(){
 
-        scanLocked = false;
+        scanLocked=false;
 
-        document.getElementById("message").innerHTML = "Ready to scan";
+        document.getElementById("message").innerHTML=
+        "Ready to scan";
 
-    }, 1500);
+    },2000);
 
 }
